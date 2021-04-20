@@ -32,6 +32,14 @@ public class AppTest {
   }
 
   @Test
+  public void testNegativeScenario() throws Exception {
+    app.addCustomer("custid", 2, 2);
+    app.isRateLimited("custid");
+    app.isRateLimited("custid");
+    assertTrue(app.isRateLimited("custid"));
+  }
+
+  @Test
   public void testRateLimitedOnThreshold() throws Exception {
     app.addCustomer("custid", 1, 2);
     app.isRateLimited("custid");

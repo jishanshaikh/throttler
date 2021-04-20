@@ -19,16 +19,41 @@ public class App {
     consumerRateLimits.put(customerId, new RateLimit(numberOfRequests, durationInSeconds));
   }
 
+  public boolean useQueueRateLimited(String customerId) throws Exception {
+    boolean isRateLimited = isRateLimited(customerId);
+
+    if ( isRateLimited ) {
+      AppQueue appQueue = new AppQueue();
+
+      Runnable task = () -> {
+        try {
+          isRateLimited(customerId);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      };
+
+      RateLimit rateLimit = consumerRateLimits.get(customerId);
+
+      RequestLogData accessLog = consumerAccessLogs.get(customerId);
+      Duration duration = Duration.between(Instant.now(), accessLog.getLastAccessTimestamp());
+
+      appQueue.sheduleTask(task, 2, rateLimit.getDurationInSeconds() - duration.getSeconds());
+    }
+
+    return isRateLimited;
+  }
+
   public boolean isRateLimited(String customerId) throws Exception {
-    Callable<Boolean> task = () -> {
+    Callable<Boolean> producer = () -> {
       try {
         RequestLogData accessLog = consumerAccessLogs.get(customerId);
 
-        if (accessLog != null) {
+        if ( accessLog != null ) {
           RateLimit rateLimit = consumerRateLimits.get(customerId);
           Duration duration = Duration.between(Instant.now(), accessLog.getLastAccessTimestamp());
 
-          if( duration.getSeconds() < 1 && accessLog.getRequestCounter()+1 < rateLimit.getNumberOfRequests() )
+          if ( duration.getSeconds() < 1 && accessLog.getRequestCounter() + 1 < rateLimit.getNumberOfRequests() )
             return false;
           else
             return true;
@@ -43,7 +68,7 @@ public class App {
       }
     };
 
-    Future<Boolean> future = executor.submit(task);
+    Future<Boolean> future = executor.submit(producer);
 
     return future.get();
   }
