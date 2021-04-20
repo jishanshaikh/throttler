@@ -19,27 +19,27 @@ public class AppTest {
   }
 
   @Test
-  public void testNotRateLimitedOnFirstAccess() {
+  public void testNotRateLimitedOnFirstAccess() throws Exception {
     app.addCustomer("custid", 10, 1);
     assertFalse(app.isRateLimited("custid"));
   }
 
   @Test
-  public void testNotRateLimitedWithinThreshold() {
+  public void testNotRateLimitedWithinThreshold() throws Exception {
     app.addCustomer("custid", 10, 2);
     app.isRateLimited("custid");
     assertFalse(app.isRateLimited("custid"));
   }
 
   @Test
-  public void testRateLimitedOnThreshold() {
+  public void testRateLimitedOnThreshold() throws Exception {
     app.addCustomer("custid", 1, 2);
     app.isRateLimited("custid");
     assertTrue(app.isRateLimited("custid"));
   }
 
   @Test
-  public void testNotRateLimitedWhenDurationExceeded() throws InterruptedException {
+  public void testNotRateLimitedWhenDurationExceeded() throws Exception {
     app.addCustomer("custid", 10, 1);
     app.isRateLimited("custid");
     Thread.sleep(1_500);
